@@ -8,3 +8,4 @@ Dockette Happy Place
 - [Dockerfile](specs/DOCKERFILE.md)
 - [Makefile](specs/MAKEFILE.md)
 - [Workflows](specs/WORKFLOWS.md)
+- [Images](specs/IMAGES.md)

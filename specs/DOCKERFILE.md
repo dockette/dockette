@@ -301,6 +301,7 @@ Multiple versions or variants, one self-contained folder per tag:
 A repository that copies files from its build context should have a `.dockerignore`:
 
 ```
+.claude
 .git
 .github
 .docs
@@ -309,6 +310,7 @@ A repository that copies files from its build context should have a `.dockerigno
 LICENSE
 Makefile
 docker-compose*.yml
+fxnorm.yml
 node_modules
 tests
 ```

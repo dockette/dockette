@@ -77,12 +77,13 @@ This document describes how we write in Dockette repositories: `README.md`, `AGE
 
 | Avoid | Use instead |
 |-------|-------------|
-| awesome, great, super, amazing, ultimate | Say what it does, with a fact |
-| tiny, tiniest, lightweight, blazing fast | A number: "48 MB", "starts in 1 s" |
+| awesome, great, super, amazing, ultimate, first class | Say what it does, with a fact |
+| tiny, tiniest, lightweight, blazing fast, lightning fast | A number: "48 MB", "starts in 1 s" |
 | ready-to-use, batteries included, boxed | List what is installed |
 | seamless, effortless, painless, magic | Describe the step the reader no longer takes |
 | simply, just, easily, obviously | Leave it out |
 | powerful, robust, modern, cutting-edge | Name the feature |
+| leverage, utilize | use |
 | dockerized | in a Docker image |
 | home programming | local development |
 | a couple of packages | Name the packages |
@@ -113,6 +114,8 @@ This document describes how we write in Dockette repositories: `README.md`, `AGE
   `docker run` commands with `\`.
 - Show output in a separate block introduced by "It prints:" instead of describing it.
 - Tables are for tags and environment variables only (see [REPOSITORY.md](REPOSITORY.md#versions-and-environment-tables)).
+  A screenshot gallery uses one `###` per screen; only thumbnails of variants of one screen may sit in an HTML
+  grid (see [REPOSITORY.md](REPOSITORY.md#screenshots)).
 - README headings use the fixed names from [REPOSITORY.md](REPOSITORY.md). Other headings use Title Case. No
   emoji, exclamation marks or links in headings.
 - Link the exact page, not a home page.
@@ -159,6 +162,10 @@ with these additions:
 - Correct wrong assumptions directly: "PHP comes from `packages.sury.org`, not from the official `php` image."
 - Describe the current state. No plans, TODO lists or "we are working on…".
 - Imperatives are short and absolute: "Never overwrite a frozen tag."
+- The templates in these specs are outlines. `{...}` marks a placeholder; every fact comes from the repository,
+  and a line that doesn't apply is deleted, not kept as a guess.
+- Dates are real. A decision or screenshot whose date is unknown is marked (`(recorded)`, `undated`), never
+  given an invented date.
 
 ## Commit Messages
 

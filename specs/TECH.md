@@ -12,6 +12,7 @@ configuration, data, services, testing and the decisions behind them. Product in
 - [When It Is Required](#when-it-is-required)
 - [Sections](#sections)
 - [Decisions](#decisions)
+- [Undated Decisions](#undated-decisions)
 - [Writing Style](#writing-style)
 - [Template](#template)
 - [Checklist](#checklist)
@@ -69,6 +70,20 @@ and marks the old one `Superseded by YYYY-MM-DD`.
 When the list passes about 10 entries or an entry needs more than 10 lines, move entries to
 `.docs/decisions/YYYY-MM-DD-slug.md` with the same headings and keep a one-line index here.
 
+### Undated Decisions
+
+A `TECH.md` written for an existing image records decisions that were made before the file existed. Their date is
+often unknown.
+
+- Take the date from git: the commit that introduced the change (`git log --diff-filter=A --format=%as -- {file}`
+  for a new file, `git log -S '{text}' --format=%as` for a line in the `Dockerfile`). Write it as the entry date.
+- When git can't tell (a shallow clone, a squashed import), use the date the entry is written and add
+  `(recorded)` after the title: `### 2026-09-28 Caddy as the static file server (recorded)`. The marker says the
+  decision is older than the date.
+- Never invent a date and never leave the heading without one. Sorting and `Superseded by` both need it.
+- `(recorded)` entries keep the Context line short and say what is known: "Chosen before the first tag; no
+  discussion is recorded."
+
 ## Writing Style
 
 - Facts first, reason second: "**The entrypoint must `exec`.** Otherwise signals stop at the shell."
@@ -78,80 +93,73 @@ When the list passes about 10 entries or an entry needs more than 10 lines, move
 
 ## Template
 
-A filled example for `dockette/kumatron`. Replace the facts, keep the order.
+`{...}` marks a placeholder: replace it with facts from the repository; delete lines that don't apply. Text
+outside braces is the fixed structure. Every version, variable, port and path comes from the `Dockerfile`, the
+entrypoint, `.env.dist`, the Compose file and `docker.yml`, not from the template.
 
 ````markdown
-# Kumatron Tech
+# {Name} Tech
 
-Uptime Kuma in one container, with optional continuous SQLite replication to S3 by Litestream.
+{What runs in the container or stack, in one sentence.}
 
 ## Architecture
 
 ```
-build:  debian:bullseye-slim -> litestream binary --+
-        debian:bullseye-slim -> envsubst binary   --+--> louislam/uptime-kuma:1.23.16-debian
-        litestream/*.yml.tpl, entrypoint.sh       --+
-run:    entrypoint.sh -> [LITESTREAM=1] litestream restore -> litestream replicate -exec node server.js
-                      -> [otherwise]    node /app/server/server.js
+build:  {stage base} -> {what the stage produces} --+--> {final base image and tag}
+        {files copied from the repository}         --+
+run:    {entrypoint} -> {condition} {what it starts}
+                     -> {otherwise} {main process}
 ```
 
-- One process tree; when enabled, Litestream is the parent and exits when Uptime Kuma exits.
-- No database server; state is one SQLite file in `/app/data`.
+- {How many processes run and which one is PID 1.}
+- {Where state lives, or that there is none.}
 
 ## Stack
 
-- Upstream: `louislam/uptime-kuma:1.23.16-debian` (Node.js, port 3001).
-- Litestream `v0.3.13`, envsubst from `a8m/envsubst`, both from GitHub releases.
+- Upstream: `{image:tag}` ({runtime, port}).
+- {Every added binary with its pinned version and where it comes from.}
 
 ## Layout
 
-- `Dockerfile` - three stages; the last one is the published image.
-- `entrypoint.sh` -> `/entrypoint.sh`.
-- `litestream/s3.yml.tpl` -> `/srv/litestream/`; rendered to `/srv/litestream/litestream.yml`.
+- `{file in the repository}` -> `{path in the image}`, {what renders it, if anything}.
 
 ## Configuration
 
-- `DATA_DIR` (default `./data/`), `LITESTREAM`, `LITESTREAM_TEMPLATE`, `LITESTREAM_DB_FILE`,
-  `LITESTREAM_S3_*`, retention and interval variables; defaults in `entrypoint.sh`, list in `.env.dist`.
-- `LITESTREAM_TEMPLATE=s3` selects `s3.yml.tpl`; `envsubst` fills it at start.
+- {Variables with their defaults, where the defaults are set, and the link to `.env.dist`.}
+- {How config files are rendered at start.}
 
 ## Data
 
-- Mount a volume at `/app/data`. Without Litestream, that volume is the only copy.
-- With Litestream, start restores from S3 when a replica exists (`-if-replica-exists`).
+- {Volumes and what is stored in each; what is lost when a volume is lost.}
 
 ## Services
 
-- Port 3001. External: an S3-compatible bucket when Litestream is on.
+- {Ports, and the external services it needs.}
 
 ## Startup Flow
 
-1. Print configuration. 2. Render the Litestream config if a template is set. 3. Restore. 4. `exec` the
-   main process.
+1. {What the entrypoint does first.} 2. {Next step.} 3. `exec` {the main process}.
 
 ## Build and Publish
 
-- CI matrix tags `latest` and `20250502`, context `.`, weekly on Monday 08:00 UTC and on push to `master`.
+- {Tags, platforms, context and schedule from docker.yml; whether CI calls make.}
 
 ## Testing
 
-- `make test` runs the image on port 3001; `make test-s3` adds Litestream with values from `.env`.
-- No automated check that replication works; test by hand against a bucket.
+- {What `make test` checks, or what CI checks when there is no `make test`.}
+- {What is only checked by hand.}
 
 ## Decisions
 
-### 2026-09-28 Litestream as a wrapper process
+### {YYYY-MM-DD} {Decision title, then "(recorded)" when the date is not the decision date}
 
-- **Context:** A lost volume loses all monitors and history.
-- **Decision:** `litestream replicate -exec` when `LITESTREAM=1`.
-- **Consequences:** (+) continuous backup; (-) one more pinned binary.
+- **Context:** {Why a choice was needed.}
+- **Decision:** {What was chosen.}
+- **Consequences:** (+) {gain}; (-) {cost}.
 
 ## Known Limits
 
-- `ENVSUBST_VERSION` says `v1.4.2`, but the download URL is hard-coded to `v1.2.0`.
-- `.env.dist` sets `LITESTREAM_TEMPLATE=basic`, but only `s3.yml.tpl` exists.
-- `entrypoint.sh` runs with `xtrace` and prints `LITESTREAM_S3_SECRET_ACCESS_KEY` to the log.
-- Downloads are not checksum-verified, and the build stages use Debian Bullseye.
+- {What is wrong or outdated today, with the file, and why it is not fixed yet.}
 ````
 
 ## Checklist
@@ -162,6 +170,8 @@ run:    entrypoint.sh -> [LITESTREAM=1] litestream restore -> litestream replica
 - [ ] Versions match the pinned `ENV *_VERSION`, `FROM` and `image:` values
 - [ ] Configuration links `.env.dist` and the README variable table
 - [ ] Data section says what is lost when the volume is lost
-- [ ] Every decision has a date, context, decision and consequences
+- [ ] Every decision has a date, context, decision and consequences; a date that is not the real decision date is
+      marked `(recorded)`
+- [ ] No placeholder and no template fact is left
 - [ ] Known limits are listed, not hidden
 - [ ] The file is 50 to 150 lines and has no emoji

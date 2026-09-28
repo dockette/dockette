@@ -12,10 +12,13 @@ and the tag lifecycle from [IMAGES.md](IMAGES.md).
 - [Files](#files)
 - [Sections](#sections)
 - [Writing Bullets](#writing-bullets)
+- [Placeholders](#placeholders)
+- [Commands and CI](#commands-and-ci)
 - [Single Image Template](#single-image-template)
 - [Multi Version Template](#multi-version-template)
 - [Project Documents](#project-documents)
 - [What Not to Include](#what-not-to-include)
+- [Checking with fxnorm](#checking-with-fxnorm)
 - [Checklist](#checklist)
 
 ## Rules
@@ -42,21 +45,25 @@ and the tag lifecycle from [IMAGES.md](IMAGES.md).
 |------|----------|---------|
 | `AGENTS.md` | yes | Overview, commands, conventions, traps |
 | `CLAUDE.md` | yes | The single line `@AGENTS.md` |
-| `PRD.md` | stacks, workspaces, republishes with our own layer | What it is for and what is out of scope, see [PRD.md](PRD.md) |
+| `PRD.md` | stacks, workspaces, republishes with our own layer; services per [PRD.md](PRD.md#when-it-is-required) | What it is for and what is out of scope, see [PRD.md](PRD.md) |
 | `TECH.md` | same as `PRD.md` | How it is built and started, and why, see [TECH.md](TECH.md) |
-| `DESIGN.md` | images with a UI we customize or write | How the UI looks and behaves, see [DESIGN.md](DESIGN.md) |
+| `DESIGN.md` | images with a UI we customize, rebrand or write | How the UI looks and behaves, see [DESIGN.md](DESIGN.md) |
 | `.claude/` | no | Shared agent settings. `settings.local.json` is never committed |
+| `fxnorm.yml` | yes | The fxnorm preset and rule settings, written by `fxnorm init`, see [Checking with fxnorm](#checking-with-fxnorm) |
 
-- All files are in the root and use uppercase names.
+- All files are in the root. The agent and project documents use uppercase names; `fxnorm.yml` is lowercase.
+- [PRD.md](PRD.md#when-it-is-required) decides which repositories need `PRD.md` and `TECH.md`. When the task
+  asks for them in a repository that doesn't need them, write them anyway; they then follow the same specs.
 - Don't add other agent files (`.cursorrules`, `.github/copilot-instructions.md`, `GEMINI.md`, `llms.txt`).
 
 ### .dockerignore
 
 The [.dockerignore template](DOCKERFILE.md#dockerignore) already excludes `*.md`, which covers `AGENTS.md`,
-`CLAUDE.md` and the project documents. Add the agent settings folder:
+`CLAUDE.md` and the project documents. Add the agent settings folder and the fxnorm config:
 
 ```
 .claude
+fxnorm.yml
 ```
 
 ## Sections
@@ -77,11 +84,13 @@ Sections, in this order. Headings use the exact names below.
 - `## Overview` names the [image class](IMAGES.md#image-classes), the base image, the published tags with what
   `latest` points to, and the platforms.
 - `## Commands` uses the [target names](MAKEFILE.md#target-names) and the variables `DOCKER_IMAGE`, `DOCKER_TAG`,
-  `DOCKER_PLATFORMS` and `VERSION`. It says which command CI runs.
+  `DOCKER_PLATFORMS` and `VERSION`. It says which command CI runs. What to write when a target is missing or CI
+  doesn't call `make` is in [Commands and CI](#commands-and-ci).
 - `## Traps` is the most useful section. When an image has nothing surprising, keep it short, but don't fill it
   with general advice.
 - The last bullet of `## Traps` says what is not in the file and where it is: "Usage for image users (ports,
-  volumes, environment variables) lives in `README.md`, not here."
+  volumes, environment variables) lives in `README.md`, not here." It stays the last bullet of `## Traps` when
+  `## Ground Rules` follows; it closes the traps, not the file.
 
 ## Writing Bullets
 
@@ -106,28 +115,61 @@ Bad:
 - Name the file to read: "See `entrypoint.sh` before changing an environment variable."
 - Say which tags a change affects, and whether `latest` moves.
 
+## Placeholders
+
+The templates below are outlines, not examples to copy. Fixed wording is written out; everything in `{...}` is a
+placeholder with a hint of what goes there.
+
+- Replace every placeholder with facts from the repository: the `Dockerfile`, the `Makefile`,
+  `.github/workflows/docker.yml`, the entrypoint and the README. Check each fact in the file named in the hint.
+- Delete lines that don't apply. A republish has no entrypoint trap; a single image has no `VERSION=` command.
+- Never keep a fact because it is in the template. A target, variable, platform or workflow step the repository
+  doesn't have is a bug in `AGENTS.md`.
+- The finished file has no placeholders left. Braces that belong to the content (`${VAR}`, Go templates) are not
+  placeholders; a placeholder always holds a hint in plain words.
+
+## Commands and CI
+
+- `## Commands` lists only targets that exist in the `Makefile` today. Never write a target the repository doesn't
+  have, even when the specs require it.
+- **No `make test`.** Every repository must have a `test` target ([MAKEFILE.md](MAKEFILE.md#target-names); fxnorm
+  reports `dockette/makefile-targets`). Until the `Makefile` has one, `## Commands` lists the targets that exist
+  and, under `# Smoke test`, the command that tests the image today (the steps from `docker.yml`, or a
+  `docker run ... --version`). A trap says it: "**There is no `make test`.** CI runs its own smoke test in
+  `.github/workflows/docker.yml`; run the same `curl` loop by hand." When the pull request touches the `Makefile`,
+  add `test` there and use it instead.
+- Other missing targets (`help`, `push`, `run`) are handled the same way: real names in `## Commands`, the gap as
+  a trap only when it surprises (plain `make` builds instead of printing help).
+- The line under the command block says what CI runs, read from `docker.yml`. When CI doesn't call `make`, say so
+  and name what it runs: "CI doesn't call `make`: `docker.yml` builds with `docker/build-push-action` and runs
+  `curl` against port 80."
+- An image without any smoke test says so in that line ("Nothing tests the image; CI only builds it.") and adds
+  `test` to the `Makefile` in the same pull request when it can.
+
 ## Single Image Template
 
-A filled example for `dockette/pgbouncer`, a thin republish. Replace every fact with the repository's own. About
-50 lines is typical.
+About 50 lines is typical when filled. `{...}` marks a placeholder: replace it with facts from the repository;
+delete lines that don't apply (see [Placeholders](#placeholders)).
 
 ````markdown
-# Dockette / PgBouncer
+# Dockette / {Name from the README header}
 
 Instructions for AI coding agents working in this repository.
 
 ## Overview
 
-`dockette/pgbouncer` republishes `dhi.io/pgbouncer` under the Dockette name on Docker Hub. It is a thin
-republish (see IMAGES.md): the Dockerfile only sets `FROM` and labels. It adds no config and no entrypoint.
+`dockette/{name}` {what the image is, one sentence: what runs in it and what it is based on}. It is a
+{image class from IMAGES.md, e.g. thin republish}: {what the Dockerfile adds, e.g. only `FROM` and labels}.
+{What it doesn't add or do.}
 
-- **Image**: `dockette/pgbouncer`, tags `1.26.0` and `latest` (same image)
-- **Base**: `dhi.io/pgbouncer:${PGBOUNCER_VERSION}`
-- **Platforms**: `linux/amd64`
+- **Image**: `dockette/{name}`, tags {tags from docker.yml} (`latest` {what it points to})
+- **Base**: `{FROM line, with the ARG it uses}`
+- **Platforms**: `{platforms docker.yml builds}`
 
 ## Documentation
 
-- `README.md` is also the Docker Hub description; CI publishes it from `master`.
+- `README.md` is also the Docker Hub description. {Whether docker.yml publishes it from `master`.}
+- {`DESIGN.md`, `PRD.md`, `TECH.md` when they exist, with one line on when to read each.}
 - Organization rules are in [dockette/dockette specs](https://github.com/dockette/dockette/tree/master/specs).
 
 ## Commands
@@ -135,35 +177,31 @@ republish (see IMAGES.md): the Dockerfile only sets `FROM` and labels. It adds n
 ```bash
 # Build the image for the default tag, or for another upstream version
 make build
-make build DOCKER_TAG=1.25.1
+make build DOCKER_TAG={an upstream tag that exists}
 
-# Smoke test (pgbouncer --version)
+# Smoke test ({what the test target runs})
 make test
 
-# Run on port 6432 with a local config
-make run PGBOUNCER_CONFIG=$(pwd)/pgbouncer.ini
+# Run {on which port, with which mount or variable}
+make run {VARIABLE=value the target reads}
 ```
 
-CI runs `make build` and `make test`, then the reusable workflow builds and pushes from `master`.
+{What CI runs, from docker.yml; say when it doesn't call make.}
 
 ## Conventions
 
-- The image tag is the upstream version. `DOCKER_TAG` is passed to the build as `PGBOUNCER_VERSION`.
-- Labels follow IMAGES.md; `org.opencontainers.image.version` comes from `PGBOUNCER_VERSION`.
-- The `Dockerfile` holds only `ARG`, `FROM` and `LABEL`. Anything more makes it a build image, not a
-  republish.
+- {How the image tag relates to the upstream version and which variable carries it.}
+- {Labels and where their values come from.}
+- {What the Dockerfile may contain, e.g. only `ARG`, `FROM` and `LABEL` for a republish.}
 
 ## Traps
 
-- **A version bump touches four places:** `DOCKER_TAG` in the `Makefile`, the tag in the workflow, the
-  `Dockerfile` default `ARG` and the README Versions table. Missing one publishes a tag that the README doesn't list.
-- **`PGBOUNCER_CONFIG` must be an absolute path.** Docker reads a relative `-v` source as a named volume and
-  mounts an empty directory instead of the file.
-- **The weekly rebuild pulls the same pinned upstream tag.** A new upstream release is not picked up on its own;
-  bump the version.
-- **Old version tags stay on Docker Hub.** Don't delete them after a bump; users pin them (IMAGES.md, Tag Naming).
-- **`linux/arm64` is not built.** Check that upstream publishes it before adding it to `DOCKER_PLATFORMS`.
-- Usage for image users (config file, ports, userlist) lives in `README.md`, not here.
+- **{A version bump touches N places:}** {every place, named as it is in the files, e.g. `DOCKER_TAG` in the
+  `Makefile`, `env.{NAME}_VERSION` in `docker.yml`, the `Dockerfile` default `ARG`, the README Versions table}.
+- **{Bold claim about a variable, mount or port that fails silently}.** {What happens and why.}
+- **{Bold claim about what the weekly rebuild does and doesn't pick up}.** {What to do instead.}
+- **{Bold claim about platforms}.** {Why a platform is missing and what to check before adding it.}
+- Usage for image users ({what the README covers}) lives in `README.md`, not here.
 ````
 
 Single image specifics:
@@ -171,29 +209,31 @@ Single image specifics:
 - For a service image, add `## Ground Rules`: the user it runs as, the ports it listens on, the `HEALTHCHECK`, and
   where secrets come from.
 - For a republish, say what upstream is and that behaviour must match it.
+- The traps in [Writing Bullets](#writing-bullets) show the tone. Don't copy them into another repository.
 
 ## Multi Version Template
 
-A filled example for `dockette/php`, one folder per tag. About 60 lines is typical.
+About 60 lines is typical when filled. `{...}` marks a placeholder: replace it with facts from the repository;
+delete lines that don't apply (see [Placeholders](#placeholders)).
 
 ````markdown
-# Dockette / PHP
+# Dockette / {Name from the README header}
 
 Instructions for AI coding agents working in this repository.
 
 ## Overview
 
-`dockette/php` builds Debian based PHP images with CLI or FPM and Composer. It is a runtime image (see
-IMAGES.md), the base for `dockette/deploy` and other tools. It ships no application code.
+`dockette/{name}` builds {what, based on what}. It is a {image class from IMAGES.md}, {the images built on it}.
+{What it doesn't ship.}
 
-- **Image**: `dockette/php`, tags `5.6` to `8.5`, each also as `-fpm`; `latest` points to the newest CLI tag
-- **Base**: `dockette/debian:bookworm`, PHP packages from `packages.sury.org`
-- **Platforms**: `linux/amd64`, `linux/arm64`
-- **Layout**: one folder per tag (`8.5/`, `8.5-fpm/`), each with its own `Dockerfile` and `conf.d/`
+- **Image**: `dockette/{name}`, tags {range, from the folders}; `latest` points to {tag}
+- **Base**: `{FROM line}`, {where the packages come from}
+- **Platforms**: `{platforms docker.yml builds}`
+- **Layout**: {one folder per tag, and what each folder holds}
 
 ## Documentation
 
-- `README.md` lists every tag with its state (Supported, Legacy, Frozen) and is the Docker Hub description.
+- `README.md` lists every tag {with its lifecycle state} and is the Docker Hub description.
 - Supported versions and the deprecation steps are in
   [IMAGES.md](https://github.com/dockette/dockette/blob/master/specs/IMAGES.md).
 
@@ -203,38 +243,32 @@ IMAGES.md), the base for `dockette/deploy` and other tools. It ships no applicat
 # Build and test the latest version, or one tag
 make build
 make test
-make build VERSION=8.4-fpm
-make test VERSION=8.4-fpm
+make build VERSION={a real tag}
+make test VERSION={a real tag}
 
 # Build and test every tag (slow)
 make build-all
 make test-all
 
-# Run the latest CLI image with the current folder mounted in /srv
+# Run {what, with which mount}
 make run
 ```
 
-CI runs `make build` and `make test` for each tag in the matrix, in parallel, with `fail-fast: false`.
+{What CI runs, from docker.yml: the matrix and whether it calls make.}
 
 ## Conventions
 
-- Binaries are versioned: `php8.5`, `php-fpm8.5`. Config goes to `conf.d/custom.ini`, which is linked as
-  `999-custom.ini` into the CLI, CGI and FPM config folders.
-- A new PHP version is a new folder pair, a `VERSION` entry in the `Makefile`, a matrix entry and a README row.
-  `latest` moves to it in the same pull request.
+- {Naming inside the image: binaries, config paths.}
+- {What a new version needs: folder, `VERSION` entry, matrix entry, README row, where `latest` moves.}
 
 ## Traps
 
-- **Every version folder is a full copy.** There is no shared template; a change for all versions is made in
-  every folder, then `make test-all` checks them.
-- **PHP comes from `packages.sury.org`, not from the official `php` image.** Extension names are Debian packages
-  (`php8.5-intl`), not `docker-php-ext-install`.
-- **`pcov` is required from PHP 7.1 up.** `make test` fails when it is missing; older tags are expected not to
-  have it.
-- **`5.6` to `8.1` are Legacy.** They build while Bookworm is supported and are marked EOL in the README. Don't
-  add features to them; fix only what breaks the build.
-- **Child images depend on these tags.** After changing a base tag, trigger `dockette/deploy` by hand.
-- Usage for image users (volumes, FPM setup, Composer) lives in `README.md`, not here.
+- **{Bold claim about how the folders relate: full copies, a shared folder or links}.** {How a change reaches
+  every version and which command checks it.}
+- **{Bold claim correcting a likely wrong assumption about where packages come from}.** {The consequence.}
+- **{Bold claim about lifecycle states of old tags}.** {What may change in them.}
+- **{Bold claim about images that depend on these tags}.** {What to trigger after a change.}
+- Usage for image users ({what the README covers}) lives in `README.md`, not here.
 ````
 
 Multi version specifics:
@@ -250,8 +284,8 @@ Multi version specifics:
 `PRD.md`, `TECH.md` and `DESIGN.md` hold knowledge that is too long for `AGENTS.md`. Their content is described in
 [PRD.md](PRD.md), [TECH.md](TECH.md) and [DESIGN.md](DESIGN.md). In short:
 
-- `PRD.md` and `TECH.md`: stacks, workspaces and republishes with our own layer
-  ([when required](PRD.md#when-it-is-required)).
+- `PRD.md` and `TECH.md`: stacks, workspaces, republishes with our own layer, and services whose README needs
+  more than one Usage section ([when required](PRD.md#when-it-is-required)).
 - `DESIGN.md`: services with a browser UI we customize or pages we write
   ([when required](DESIGN.md#when-it-is-required)).
 - Base, runtime, tool and plain republish images have none of them. Their build notes stay in `AGENTS.md` and
@@ -276,6 +310,37 @@ Don't repeat their content in `AGENTS.md`. A trap that is explained in `TECH.md`
 - Text addressed to one tool ("This file provides guidance to …").
 - Plans, TODO lists, status notes and references to work in progress. Describe the current state.
 
+## Checking with fxnorm
+
+`fxnorm` checks a repository against these specs and reports each deviation with the file, the line and the id of
+the rule that found it. Set it up once per repository, then check after every change:
+
+```bash
+# Detect the kind of repository and write fxnorm.yml (preset dockette-image)
+fxnorm init
+
+# Report deviations, or apply the safe fixes and report what is left
+fxnorm check
+fxnorm fix
+```
+
+- `fxnorm.yml` is committed in the root. It names the preset and, when needed, rule settings. A setting that
+  turns a rule off or lowers its severity has a comment with the reason.
+- `fxnorm fix` writes `CLAUDE.md` (`common/claude-md-import`) and the Makefile help block. Everything else is
+  fixed by hand.
+- The rules for this document are `common/agents-md-exists`, `common/agents-md-length` (50 to 100 lines),
+  `common/agents-md-no-emoji`, `common/claude-md-import` and `common/tone-words` (`README.md` and `AGENTS.md`).
+  `dockette/design-md-exists` and `dockette/prd-tech-exist` check the project documents.
+- Fix the file instead of silencing the rule. A finding you accept gets `<!-- fxnorm:ignore {rule id} -->` on the
+  line above it, with the reason in the same comment.
+- `fxnorm explain {rule id}` shows what a rule checks and which section of these specs it enforces. When a rule
+  and these specs disagree, the specs win; report the rule.
+- `fxnorm.yml`, `AGENTS.md` and `CLAUDE.md` never end up in an image: `.dockerignore` excludes them when the
+  Dockerfile copies the whole context (see [.dockerignore](#dockerignore)). In a Contributte library the same
+  files are export-ignored in `.gitattributes`.
+- `AGENTS.md` doesn't list `fxnorm` in `## Commands`. It is the same in every repository and belongs in these
+  specs.
+
 ## Checklist
 
 - [ ] `AGENTS.md` exists in the root and has 50 to 100 lines
@@ -284,8 +349,10 @@ Don't repeat their content in `AGENTS.md`. A trap that is explained in `TECH.md`
       (Ground Rules)
 - [ ] Overview states the image class, base image, tags with `latest`, platforms and, for multi version repos,
       the folder layout
-- [ ] Commands use `make build`, `make test`, `make run` (and `VERSION=` or `build-all` for multi version repos)
-      and say what CI runs
+- [ ] Every fact comes from the repository; no placeholder and no template fact is left
+- [ ] Commands exist in the `Makefile` today: `make build`, `make test`, `make run` (and `VERSION=` or `build-all`
+      for multi version repos); a missing `test` is replaced by the real smoke test and named as a trap
+- [ ] The line under the commands says what CI runs, including when it doesn't call `make`
 - [ ] Every trap opens with a bold claim and says why or where to read more
 - [ ] The last trap bullet points to `README.md`
 - [ ] No generic advice, no emoji, no tables, no tool-specific wording
@@ -293,3 +360,4 @@ Don't repeat their content in `AGENTS.md`. A trap that is explained in `TECH.md`
       linked from `## Documentation`
 - [ ] Agent files are excluded from the build context when the Dockerfile copies it
 - [ ] `.claude/settings.local.json` is not committed
+- [ ] `fxnorm check` reports no findings in `AGENTS.md` and `CLAUDE.md`

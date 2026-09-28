@@ -11,13 +11,15 @@ This document describes how Makefiles in Dockette repositories are written.
 - [Single Image Template](#single-image-template)
 - [Multi Version Template](#multi-version-template)
 - [Target Names](#target-names)
+- [Checking with fxnorm](#checking-with-fxnorm)
 - [Checklist](#checklist)
 
 ## Rules
 
 - Running `make` without a target prints the help, same as `make help`.
 - Every public target has a `## Description` comment on its target line.
-- Every target has its own `.PHONY` line directly above it.
+- Every public target has its own `.PHONY` line directly above it. Private `_` pattern rules need none.
+- `build`, `test` and `run` always exist. There is no Dockette repository without a `test` target.
 - Targets are grouped into sections with `##@ Section` headers.
 - Env files are included at the top when the Makefile uses environment variables.
 - Image name, tag and platforms are variables (`DOCKER_IMAGE`, `DOCKER_TAG`, `DOCKER_PLATFORMS`).
@@ -96,6 +98,9 @@ Makefiles that don't use any environment variables don't include env files.
 
 Use `DOCKER_PLATFORMS` (plural), not `DOCKER_PLATFORM`. Don't use bare `IMAGE`/`TAG`.
 
+Multi version repositories use `VERSION?=<latest>` instead of `DOCKER_TAG` (see
+[Multi Version Template](#multi-version-template)).
+
 Override on the command line:
 
 ```bash
@@ -137,6 +142,14 @@ push: ## Push image
 ```
 
 `test` is a smoke test: run the image and check the main binary answers (`--version`, config test, file exists).
+
+- A service image starts the container in the background, waits for the port and checks one response, then
+  removes the container: `docker run -d --name {name}-test ...`, a `curl` retry loop, `docker rm -f {name}-test`.
+- When the workflow has its own smoke test steps, move them into `test` and let the workflow call `make test`
+  ([WORKFLOWS.md](WORKFLOWS.md)). The workflow and the Makefile must not test different things.
+- An image that has no test today adds `test` before anything else changes in the `Makefile`. Until it does,
+  `AGENTS.md` names the real smoke test and the missing target (see
+  [AGENTS.md](AGENTS.md#commands-and-ci)).
 
 ## Multi Version Template
 
@@ -208,12 +221,48 @@ make build-all          # all versions
 
 Avoid `docker-build`, `docker-push` and `docker-build-<version>`; use `build`, `push` and `VERSION=<version>`.
 
+## Checking with fxnorm
+
+`fxnorm check` checks the Makefile against this document. `fxnorm fix` adds `.DEFAULT_GOAL := help` and the
+[help block](#help) when they are missing; the other findings are fixed by hand.
+
+```bash
+# Once per repository: write fxnorm.yml with the dockette-image preset
+fxnorm init
+
+# Check, or fix what can be fixed and check again
+fxnorm check
+fxnorm fix
+```
+
+| Rule | Checks |
+|------|--------|
+| `common/makefile-help` | `.DEFAULT_GOAL := help` and a `help` target (fixable) |
+| `common/makefile-target-descriptions` | Every public target has a `## Description` comment |
+| `dockette/makefile-exists` | A `Makefile` exists in the root |
+| `dockette/makefile-phony` | Every public target has its own `.PHONY` line directly above it |
+| `dockette/makefile-targets` | `build`, `test` and `run` exist |
+| `dockette/makefile-target-names` | No public `docker-build`, `docker-push` or `docker-build-<version>` |
+| `dockette/makefile-docker-image` | `DOCKER_IMAGE`, not a bare `IMAGE` |
+| `dockette/makefile-docker-tag` | `DOCKER_TAG?=`, or `VERSION?=` in multi version repositories |
+| `dockette/makefile-docker-platforms` | `DOCKER_PLATFORMS?=`, not `DOCKER_PLATFORM` |
+| `dockette/makefile-buildx` | Every build uses `docker buildx build --platform ${DOCKER_PLATFORMS}` |
+| `dockette/makefile-env-include` | `-include .env`, not `include .env` |
+
+- `fxnorm.yml` is committed in the root and listed in `.dockerignore` when the Dockerfile copies the whole build
+  context ([DOCKERFILE.md](DOCKERFILE.md#dockerignore)). In a Contributte library it is export-ignored in
+  `.gitattributes`, together with `AGENTS.md` and `CLAUDE.md`.
+- The Makefile has no `fxnorm` target. fxnorm runs the same way in every repository.
+- `fxnorm explain {rule id}` shows what a rule checks. When a rule and this document disagree, this document wins;
+  report the rule.
+
 ## Checklist
 
 - [ ] `make` prints the help
 - [ ] Every public target has a `## Description`
 - [ ] Every target has its own `.PHONY` (except `_` pattern rules)
 - [ ] `DOCKER_IMAGE`, `DOCKER_TAG`, `DOCKER_PLATFORMS` variables are used
-- [ ] `build`, `test` and `run` targets exist
+- [ ] `build`, `test` and `run` targets exist; `test` is the smoke test CI runs
+- [ ] `fxnorm check` reports no findings in the `Makefile`
 - [ ] `.env` is included (`-include .env` + `export`) if the image needs environment variables
 - [ ] `.env.dist` lists the variables and `.env` is in `.gitignore`

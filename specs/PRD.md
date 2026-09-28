@@ -38,6 +38,10 @@ Use the image class from [IMAGES.md](IMAGES.md#image-classes):
 | Service with a documented product scope | `adminer`, `apidoc`, `packagist` | when its README needs more than one Usage section |
 | Base, runtime, tool, plain republish | `debian`, `php`, `deploy`, `cadvisor` | no |
 
+`AGENTS.md` and fxnorm follow this table: `dockette/prd-tech-exist` (a warning) knows the repositories named in
+the "yes" rows and treats a Compose file with two or more services and no Dockerfile as a stack. A service in the
+conditional row gets the files when its README needs more than one Usage section, or when a task asks for them.
+
 The product of an image is the running container. Its users are the people who write `docker run` or a
 Compose file, and its success is measured by what works without reading the Dockerfile.
 
@@ -53,7 +57,8 @@ Use these `##` sections in this order:
 6. `## Scope` - services, variants or features as bullets or user stories, grouped by area.
 7. `## Success Criteria` - observable facts: a command that starts it, a port that answers, a size, a time.
 8. `## Out of Scope` - things users ask for that live in another image or upstream, with a pointer.
-9. `## Open Questions` - dated bullets; remove each when decided and record it in `TECH.md`.
+9. `## Open Questions` - bullets dated with the day the question was written down; remove each when decided and
+   record it in `TECH.md` (a dated entry, see [TECH.md](TECH.md#decisions)).
 
 ## Writing Style
 
@@ -64,60 +69,50 @@ Use these `##` sections in this order:
 
 ## Template
 
-A filled example for `dockette/devstack`. Replace the facts, keep the order.
+`{...}` marks a placeholder: replace it with facts from the repository; delete lines that don't apply. Scope and
+success criteria describe what the image or stack does today, checked by running it, not what the template or the
+old README claims.
 
 ````markdown
-# DevStack PRD
+# {Name} PRD
 
-DevStack is a Compose stack for local PHP development: Apache, PHP-FPM, MariaDB and Adminer, managed by one
-`devstack` shell script.
+{Name} is {what the image or stack is, one sentence, with its class from IMAGES.md}.
 
 ## Problem
 
-Running several PHP projects on one laptop needs a web server, PHP with debug tools, a database and a DB UI.
-Installing them on the host breaks on OS upgrades and mixes versions between projects.
+{2 to 4 sentences: what a user has to do without it, and what goes wrong.}
 
 ## Users
 
-- PHP developers on Linux or macOS with Docker and the Compose plugin installed.
-- They know `docker compose` basics and edit `/etc/hosts`; they don't want to write Compose files.
+- {Who runs it, on what host, with what installed.}
+- {What they know and what they don't want to do.}
 
 ## Goals
 
-- One command (`devstack up`) starts the whole stack from `~/.devstack/docker-compose.yml`.
-- `~/projects` is mounted as `/srv` and served by Apache, with no per-project config.
-- Xdebug, Composer and a mail catcher work without extra setup.
-- The same images and ports on every developer machine.
+- {A checkable goal: one command that starts it.}
+- {A checkable goal about what works without extra setup.}
 
 ## Non-goals
 
-- Not for production - default passwords are `root` and Xdebug is on.
-- No per-project PHP version - one PHP-FPM service keeps the stack small.
-- No GUI installer - the script and one Compose file are the whole interface.
+- {What it will not try to be} - {the reason in one clause}.
 
 ## Scope
 
-- Services: `apache`, `php85` (FPM), `adminer`, `mariadb`, plus `data` and `userdirs` volume holders.
-- Optional services, commented out: `nodejs`, `postgresql`, `blackfire`.
-- Script commands: start, restart, logs, build, destroy, upgrade, exec, attach as `dfx` user.
-- Fixed IPs in `172.10.10.0/24` so Xdebug and `/etc/hosts` entries stay stable.
-- SSH agent forwarded into PHP and Node.js containers.
+- {Area, e.g. Services or Variants}: {what exists today, from the Compose file, the folders or docker.yml}.
+- {Area}: {what exists}.
 
 ## Success Criteria
 
-- After the README install steps, `http://localhost` serves a project and `http://localhost:8000` shows Adminer.
-- `make test` passes: Compose config is valid and `devstack` has no shell syntax errors.
-- CI validates the Compose file and builds `apache`, `php85-fpm` and `nodejs` every week.
+- {Observable fact: a URL or port that answers after the README steps.}
+- {What `make test` or CI checks, and how often CI runs.}
 
 ## Out of Scope
 
-- Database UI details and themes - see `dockette/adminer`.
-- Plain PHP images for CI or production - see `dockette/php` and `dockette/web`.
-- Browser-based workspaces - see `dockette/coder`.
+- {What users ask for} - see {the image or upstream project where it lives}.
 
 ## Open Questions
 
-- 2026-09-28: Move the MariaDB root password to `.env` instead of the Compose file?
+- {YYYY-MM-DD}: {A question that is not decided yet.}
 ````
 
 ## Checklist
@@ -128,5 +123,6 @@ Installing them on the host breaks on OS upgrades and mixes versions between pro
 - [ ] Every non-goal has a reason
 - [ ] Out of scope items point to the image or upstream project where the thing lives
 - [ ] Scope matches the Compose file, the Versions table and the README variables today
+- [ ] No placeholder and no template fact is left
 - [ ] Open questions are dated; decided ones are removed and recorded in `TECH.md`
 - [ ] The file is 50 to 150 lines and has no emoji or marketing words

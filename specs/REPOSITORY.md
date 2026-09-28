@@ -12,6 +12,7 @@ Makefiles in [MAKEFILE.md](MAKEFILE.md), CI in [WORKFLOWS.md](WORKFLOWS.md) and 
 - [README](#readme)
 - [README Template](#readme-template)
 - [Versions and Environment Tables](#versions-and-environment-tables)
+- [Screenshots](#screenshots)
 - [LICENSE](#license)
 - [EditorConfig](#editorconfig)
 - [Gitignore](#gitignore)
@@ -43,6 +44,7 @@ Dockerfile
 LICENSE
 Makefile
 README.md
+fxnorm.yml
 ```
 
 Multiple versions or variants (`php`, `debian`, `nodejs`, `postgres`, …) keep one folder per image tag,
@@ -58,6 +60,7 @@ CLAUDE.md
 LICENSE
 Makefile
 README.md
+fxnorm.yml
 ```
 
 Optional files and folders:
@@ -73,7 +76,8 @@ Optional files and folders:
 | `PRD.md` + `TECH.md` | Product and technical design, only for app-like images and stacks, see [PRD.md](PRD.md) and [TECH.md](TECH.md) |
 | `entrypoint.sh`, config files | Files copied into the image |
 
-- README images live in `.docs/`, not in the root.
+- README images live directly in `.docs/`, not in the root and not in `.docs/assets/`. Variants of one screen may
+  use a subfolder (`.docs/themes/`).
 - Don't commit IDE or cloud workspace configs (`.gitpod.yml`, `.idea/`, `.vscode/`).
 - Don't commit large binaries into git; if they must be versioned, use Git LFS via `.gitattributes`.
 
@@ -138,6 +142,8 @@ Don't use the old Contributte footer (`contributte.org/contributing.html`, maint
    {What is inside, with a link to <a href="{upstream-url}">{Upstream}</a>. What it is based on and who it is for.}
 </p>
 
+<!-- optional: the author links line, then one screenshot from .docs/ -->
+
 -----
 
 ## Usage
@@ -176,7 +182,9 @@ make run
 See [how to contribute](https://github.com/dockette/.github/blob/master/CONTRIBUTING.md) to this package. Consider [supporting](https://github.com/sponsors/f3l1x) **f3l1x**. Thank you for using this package.
 ````
 
-Remove `## Versions` and `## Environment` when they don't apply.
+`{...}` marks a placeholder: replace it with facts from the repository; delete lines that don't apply. Remove
+`## Versions` and `## Environment` when they don't apply. Topic sections (a local config, a Compose example, a
+screenshot gallery) go after `## Environment` and before `## Development`, in the order a user needs them.
 
 ## Versions and Environment Tables
 
@@ -185,11 +193,25 @@ Remove `## Versions` and `## Environment` when they don't apply.
 - Env tables use the columns `Variable | Default | Description`, with names and defaults in backticks.
 - Keep tables in sync with the folders and the Makefile `VERSION` list.
 
+## Screenshots
+
+- A README shows at most one screenshot in the header. More screens go to a topic section after
+  `## Environment`.
+- A gallery of different screens has one `###` heading per screen, a one-sentence lead-in that says what the
+  screen does, then the image. Tables are not used for this ([TONE.md](TONE.md#formatting)).
+- Variants of one screen (themes, sizes) may be a grid of thumbnails in HTML, `width="200"`, with the variant name
+  as the caption.
+- Every image in `.docs/` is listed with its date in `DESIGN.md` when the repository has one
+  ([DESIGN.md](DESIGN.md#screenshots)). An image that shows an old name or version is retaken or removed.
+
 ## LICENSE
 
 - MIT License, file named `LICENSE` (no extension).
 - Holder is `Dockette`: `Copyright (c) {year} Dockette`.
 - The year is the year the repository was created. Don't bump it.
+- Take the year from the first commit (`git log --reverse --format=%as | head -1`). A shallow clone doesn't have
+  it: fetch the full history, or read the creation date on the GitHub repository page. Never copy the year from
+  another repository.
 - Exception: a repository that redistributes third-party binaries keeps the vendor's license (for example `oracle-instantclient`).
 
 ## EditorConfig
@@ -259,10 +281,12 @@ services:
 
 ## Agent Files
 
-When a repository has agent instructions:
+Every repository has agent instructions:
 
 - `AGENTS.md` holds the instructions. Its content is described in [AGENTS.md](AGENTS.md).
 - `CLAUDE.md` contains only the line `@AGENTS.md`.
+- `fxnorm.yml`, written by `fxnorm init`, sets the checks for the repository (see
+  [AGENTS.md](AGENTS.md#checking-with-fxnorm)). `fxnorm check` runs the rules that enforce this document.
 
 ## Checklist
 
@@ -279,5 +303,5 @@ When a repository has agent instructions:
 - [ ] `.editorconfig` globs have no spaces and `Makefile` uses tabs
 - [ ] `.env` is ignored and `.env.dist` is committed when env variables are used
 - [ ] `docker-compose.yml` has no `version:` key
-- [ ] README images are in `.docs/`
-- [ ] `AGENTS.md` exists and `CLAUDE.md` is `@AGENTS.md`
+- [ ] README images are in `.docs/` (no `assets/` level); galleries use one `###` per screen
+- [ ] `AGENTS.md` exists, `CLAUDE.md` is `@AGENTS.md` and `fxnorm.yml` is committed

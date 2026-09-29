@@ -25,6 +25,8 @@ Makefiles in [MAKEFILE.md](MAKEFILE.md), CI in [WORKFLOWS.md](WORKFLOWS.md) and 
 - Every repository has `README.md`, `LICENSE`, `.editorconfig` and `Makefile` in the root.
 - The README starts with the centered `Dockette / {Name}` header, the standard badge row and a short description.
 - The README ends with the `## Maintenance` section and the standard footer text.
+- `## Usage` is one `docker run` with the untagged image, a short note and a docs link; `## Development` is a
+  few `make` commands. Both stay short (see [README](#readme)).
 - The license is MIT, held by `Dockette`.
 - Badges use `img.shields.io` and the GitHub Actions badge. No `badgen.net`, no Gitter, no Docker Hub stars.
 - Support goes to GitHub Discussions (`https://github.com/orgs/dockette/discussions`), not Gitter.
@@ -86,11 +88,11 @@ Sections, in this order:
 | Section | Required | Content |
 |---------|----------|---------|
 | Header | yes | Centered `<h1>`, badge row, description, `-----` |
-| `## Usage` | yes | Copy-paste `docker run` commands, `docker compose` steps or a `FROM` example |
+| `## Usage` | yes | One `docker run` (or one `FROM` line for base images), a short note and a link to the docs |
 | `## Versions` | multi-tag repos | Table of tags, see below |
-| `## Configuration` / `## Environment` | when relevant | Env variables table, mounted paths, ports |
+| `## Environment` | only when the image reads env variables | Env variables table |
 | Other topic sections | optional | Documentation, tips, legacy notes |
-| `## Development` | when a Makefile exists | `make build`, `make test`, `make run` |
+| `## Development` | when a Makefile exists | 3 to 5 `make` commands with comments, then "Run `make` to list every target." |
 | `## Maintenance` | yes | Standard footer, always last |
 
 Header:
@@ -105,14 +107,24 @@ Header:
 - The header ends with a `-----` rule.
 - Drop the Docker Hub pulls badge only when no image is published to Docker Hub.
 
-Usage:
+Usage is simple and flexible:
 
-- Start with one runnable command, introduced by a sentence that ends with a colon.
-- Follow it with one sentence on the base and what the image needs: "Based on Debian Bookworm. Mount your project
-  to `/srv`."
-- Use fenced code blocks (`sh`, `yaml`, `Dockerfile`) with real, runnable commands.
-- Use `dockette/{name}:{tag}` image names. Split long `docker run` commands with `\`.
-- List one command per published tag when the repo has many versions.
+- One `docker run` with only the essential argument (the mount or the command the image needs) and the untagged
+  image name `dockette/{name}`, introduced by a sentence that ends with a colon. A base image shows one `FROM`
+  line instead.
+- Then a short paragraph: what the image adds or leaves out, what it needs, and a link to the upstream docs or the
+  configuration reference.
+- One or two code blocks in total. No ports, container names, pinned tags, long config samples, multiple variants
+  or step-by-step walkthroughs. Tags go to `## Versions`, env variables to `## Environment`, the upstream config
+  to its own docs.
+- A `docker-compose.yml`, when the repository has one, is started with one `docker compose up` line; the file itself
+  is linked, not pasted.
+
+Development is high level:
+
+- One `sh` block of 3 to 5 `make` commands that exist in the `Makefile`, each with a short comment.
+- Then exactly "Run `make` to list every target."
+- No options (`VERSION=`, `DOCKER_TAG=`), paths or env variables; those live in the Makefile help and `AGENTS.md`.
 
 Maintenance footer, exactly:
 
@@ -146,13 +158,14 @@ Don't use the old Contributte footer (`contributte.org/contributing.html`, maint
 
 ## Usage
 
-Run {what the command does}:
+{Mount your config and run it / Run it}:
 
 ```sh
-docker run -it --rm dockette/{name}:{tag} {command}
+docker run {essential argument} dockette/{name}
 ```
 
-Based on `{base image}`. {What it needs: volumes, ports, a config file.}
+{What the image adds or leaves out and what it needs, one to three sentences}, see the
+[{upstream docs}]({docs-url}).
 
 ## Versions
 
@@ -163,6 +176,8 @@ Based on `{base image}`. {What it needs: volumes, ports, a config file.}
 
 ## Environment
 
+<!-- only when the image reads env variables -->
+
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `{VAR}` | `{default}` | {What it does} |
@@ -170,10 +185,12 @@ Based on `{base image}`. {What it needs: volumes, ports, a config file.}
 ## Development
 
 ```sh
-make build
-make test
-make run
+make build   # build the image
+make test    # smoke test it
+make run     # run it locally
 ```
+
+Run `make` to list every target.
 
 ## Maintenance
 
@@ -181,7 +198,8 @@ See [how to contribute](https://github.com/dockette/.github/blob/master/CONTRIBU
 ````
 
 `{...}` marks a placeholder: replace it with facts from the repository; delete lines that don't apply. Remove
-`## Versions` and `## Environment` when they don't apply. Topic sections (a local config, a Compose example, a
+`## Versions` when the repository has one tag and `## Environment` when the image reads no env variables. The
+approved reference is the `dockette/pgbouncer` README. Topic sections (a local config, a Compose example, a
 screenshot gallery) go after `## Environment` and before `## Development`, in the order a user needs them.
 
 ## Versions and Environment Tables
@@ -189,6 +207,9 @@ screenshot gallery) go after `## Environment` and before `## Development`, in th
 - Tag tables use the columns `Tag | Description`. Republished upstream images use `Tag | Upstream`.
 - Always show the full image reference (`dockette/{name}:{tag}`) in backticks and say what `latest` points to.
 - Env tables use the columns `Variable | Default | Description`, with names and defaults in backticks.
+- An env table is its own `## Environment` section, never part of `## Usage`, and exists only when the image
+  (its entrypoint or the upstream program) reads the variables. An image configured by a mounted file has no
+  env table.
 - Keep tables in sync with the folders and the Makefile `VERSION` list.
 
 ## Screenshots
@@ -275,7 +296,7 @@ services:
 - Service names match what they run.
 - Use `dockette/{name}` images; use `build:` only for local development stacks.
 - Values that differ per user come from `.env` (`${VAR:-default}`), listed in `.env.dist`.
-- The README shows how to start it (`docker compose up`).
+- The README shows how to start it with one `docker compose up` line and links the file; it doesn't paste it.
 
 ## Agent Files
 
@@ -293,8 +314,10 @@ Every repository has agent instructions:
 - [ ] Badge row: GitHub Actions, Docker Hub pulls, GitHub Sponsors, Discussions (shields.io, with `alt`)
 - [ ] No Gitter, badgen.net or Docker Hub stars badges
 - [ ] Description of one to three sentences: what is inside, what it is based on, who it is for
-- [ ] `## Usage` starts with a runnable command and a sentence on the base and requirements
-- [ ] Tags and env variables are documented in tables when the image has them
+- [ ] `## Usage` has one `docker run` with the essential argument and the untagged image, a short note and a docs
+  link; one or two code blocks, no ports, container names, pinned tags, config samples or variants
+- [ ] Tags are in the `## Versions` table; env variables are in `## Environment` only when the image reads them
+- [ ] `## Development` is 3 to 5 `make` commands with comments, then "Run `make` to list every target."
 - [ ] README ends with `## Maintenance` and the standard footer ("Consider supporting …")
 - [ ] Text follows [TONE.md](TONE.md)
 - [ ] LICENSE is MIT, `Copyright (c) {year} Dockette`

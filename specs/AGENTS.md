@@ -1,6 +1,6 @@
 # Dockette AGENTS.md Specification
 
-This document describes how `AGENTS.md` and `CLAUDE.md` are written in Dockette repositories. `AGENTS.md` is a
+This document describes how `AGENTS.md` is written in Dockette repositories. `AGENTS.md` is a
 short development guide for AI coding agents and people: the stack, the commands and the principles. Usage for
 image users lives in `README.md`, organization rules in these specs. How to write the text is described in
 [TONE.md](TONE.md); commands come from [MAKEFILE.md](MAKEFILE.md).
@@ -22,7 +22,7 @@ image users lives in `README.md`, organization rules in these specs. How to writ
 - Only facts that are true for the repository: every command must exist.
 - It stays high level. It does not describe the file or folder structure, architecture internals, traps, history,
   planned changes, TODOs or "what is changing".
-- `CLAUDE.md` contains exactly one line: `@AGENTS.md`.
+- `AGENTS.md` is the only agent file; no `CLAUDE.md`.
 - Don't add other agent files (`.cursorrules`, `.github/copilot-instructions.md`, `GEMINI.md`, `llms.txt`).
 - `AGENTS.md` doesn't link `PRD.md`, `TECH.md` or `DESIGN.md`. The README links them when they exist.
 - Agent files never end up in an image. The [.dockerignore template](DOCKERFILE.md#dockerignore) excludes `*.md`;
@@ -128,16 +128,16 @@ fxnorm fix
 
 - `fxnorm.yml` is committed in the root. A setting that turns a rule off or lowers its severity has a comment
   with the reason.
-- `fxnorm fix` writes `CLAUDE.md` (`common/claude-md-import`) and the Makefile help block. Everything else is
-  fixed by hand.
+- `fxnorm fix` writes the Makefile help block and deletes a `CLAUDE.md` that only imports `@AGENTS.md`
+  (`common/no-claude-md`). Everything else is fixed by hand.
 - The rules for this document are `common/agents-md-exists`, `common/agents-md-length` (20 to 45 lines),
   `common/agents-md-sections`, `common/agents-md-no-structure`, `common/agents-md-no-emoji`,
-  `common/claude-md-import` and `common/tone-words`.
+  `common/no-claude-md` and `common/tone-words`.
 - Fix the file instead of silencing the rule. A finding you accept gets `<!-- fxnorm:ignore {rule id} -->` on the
   line above it, with the reason in the same comment.
 - `fxnorm explain {rule id}` shows what a rule checks. When a rule and these specs disagree, the specs win; report
   the rule.
-- `fxnorm.yml`, `AGENTS.md` and `CLAUDE.md` never end up in an image. In a Contributte library the same files are
+- `fxnorm.yml` and `AGENTS.md` never end up in an image. In a Contributte library the same files are
   export-ignored in `.gitattributes`.
 - `AGENTS.md` doesn't list `fxnorm` in `## Development`. It is the same in every repository.
 
@@ -148,6 +148,6 @@ fxnorm fix
 - [ ] Every command in `## Development` exists in the `Makefile` today (`VERSION=` only for multi version repos)
 - [ ] No folder structure, architecture, traps, history, plans or TODOs
 - [ ] No emoji, no tables, no placeholder left
-- [ ] `CLAUDE.md` contains only `@AGENTS.md`
+- [ ] No `CLAUDE.md`; `AGENTS.md` is the only agent file
 - [ ] Agent files are excluded from the build context when the Dockerfile copies it
-- [ ] `fxnorm check` reports no findings in `AGENTS.md` and `CLAUDE.md`
+- [ ] `fxnorm check` reports no findings in `AGENTS.md`

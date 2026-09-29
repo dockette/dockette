@@ -20,6 +20,7 @@ and [TECH.md](TECH.md).
 ## Rules
 
 - `DESIGN.md` lives in the repository root, next to `README.md` and `AGENTS.md`.
+- The README links it. `AGENTS.md` doesn't link it; it covers development only.
 - It is 50 to 150 lines, or 25 to 60 for a [rebranded upstream UI](#rebranded-upstream-ui). Longer material moves
   to `.docs/` and is linked.
 - It describes our layer, not the upstream UI. Link the upstream project for everything we don't change.

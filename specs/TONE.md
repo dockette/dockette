@@ -41,7 +41,8 @@ This document describes how we write in Dockette repositories: `README.md`, `AGE
    and FPM images on Debian Bookworm, with Composer installed."
 2. **Start from the reader's problem.** One sentence on what is hard without the image, then what the image does
    about it.
-3. **Show first, explain second.** Put one runnable `docker run` command before any table.
+3. **Show first, explain second.** Put one runnable `docker run` command before any table. Keep it to the one
+   argument the image needs; the reader adds ports, names and tags.
 4. **Be concrete.** "Based on `dockette/debian:bookworm-slim`, 48 MB" beats "tiny image". "Listens on port 8000"
    beats "ready to use".
 5. **Be honest about limits.** "`linux/amd64` only; upstream has no ARM build." "Runs as root." Say it.
@@ -110,8 +111,8 @@ This document describes how we write in Dockette repositories: `README.md`, `AGE
 - Inline code for every image, tag, variable, port, path and command: `dockette/php:8.5`, `PHP_VERSION`,
   `8000`, `/srv`, `make build`.
 - Code blocks have a language: `sh`, `yaml`, `Dockerfile`, `ini`.
-- Commands must run when copied. Use real image names and tags and no `...` inside commands. Split long
-  `docker run` commands with `\`.
+- Commands must run when copied. Use real image names and no `...` inside commands. The `## Usage` command uses
+  the untagged image (`dockette/pgbouncer`) and fits on one line; tags belong in `## Versions`.
 - Show output in a separate block introduced by "It prints:" instead of describing it.
 - Tables are for tags and environment variables only (see [REPOSITORY.md](REPOSITORY.md#versions-and-environment-tables)).
   A screenshot gallery uses one `###` per screen; only thumbnails of variants of one screen may sit in an HTML
@@ -146,9 +147,13 @@ Use GitHub alerts. Don't use bold labels, brackets or emoji for hints.
   topic sections, Development, Maintenance.
 - The description is one to three sentences and answers three questions: what is inside, what it is based on and
   who it is for.
-- `## Usage` starts with one runnable command, then says what the image is based on and what it needs (volumes,
-  ports, a config file).
-- Environment variables are explained in the Environment table, one row each, with the default.
+- `## Usage` is simple and flexible: one `docker run` with the essential argument and the untagged image, then a
+  short paragraph on what the image adds or leaves out and a link to the docs. One or two code blocks. No ports,
+  container names, pinned tags, config samples, variants or walkthroughs.
+- `## Development` is high level: 3 to 5 `make` commands with a short comment each, then "Run `make` to list every
+  target." No options, paths or env variables.
+- Environment variables are explained in their own `## Environment` table, one row each, with the default, and only
+  when the image reads them.
 - State the image class and the platforms when they are not the defaults: "Runs as root.", "`linux/amd64` only."
 
 ## Agent and Project Documents
@@ -248,6 +253,68 @@ Real text from our repositories, rewritten in the house style.
 > After: Adminer, the single-file database manager, in Docker images from 8 MB. Each tag carries the driver for
 > one database (`mysql`, `pgsql`, `mongo`, `mssql`, `oracle-19`) or for several (`full`).
 
+**dockette/pgbouncer, Usage**
+
+> Before: a port, a container name, a pinned tag, a full config sample and a second variant:
+>
+> ````markdown
+> Run PgBouncer on port `6432` with your own `pgbouncer.ini` from the current folder:
+>
+> ```sh
+> docker run --name some-pgbouncer -p 6432:6432 \
+>   -v "$(pwd)/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro" \
+>   dockette/pgbouncer:1.26.0
+> ```
+>
+> A minimal `pgbouncer.ini` looks like this. Adjust `host`, the auth settings and the pool sizes for your database:
+>
+> ```ini
+> [databases]
+> * = host=postgres port=5432
+>
+> [pgbouncer]
+> listen_addr = 0.0.0.0
+> listen_port = 6432
+> auth_type = md5
+> auth_file = /etc/pgbouncer/userlist.txt
+> pool_mode = transaction
+> ```
+>
+> The config above reads users from `auth_file`. Mount your userlist next to the config:
+> (a second `docker run` with one more `-v`)
+> ````
+
+> After: the one essential argument, the untagged image and a link to the reference:
+>
+> ````markdown
+> Mount your own `pgbouncer.ini` and run it:
+>
+> ```sh
+> docker run -v ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro dockette/pgbouncer
+> ```
+>
+> The image is upstream PgBouncer with nothing added: no default config, no environment variables. Everything is
+> set in `pgbouncer.ini` (plus `userlist.txt` if you use `auth_file`), see the
+> [configuration reference](https://www.pgbouncer.org/config.html).
+> ````
+
+**dockette/pgbouncer, Development**
+
+> Before: `make run PGBOUNCER_CONFIG=$(pwd)/pgbouncer.ini`, followed by a paragraph on `DOCKER_TAG`,
+> `PGBOUNCER_USERLIST` and absolute paths.
+
+> After:
+>
+> ````markdown
+> ```sh
+> make build   # build the image
+> make test    # smoke test it
+> make run     # run it locally
+> ```
+>
+> Run `make` to list every target.
+> ````
+
 **Footer**
 
 > Before: Consider to support **f3l1x**. Thank you for using this package.
@@ -272,6 +339,8 @@ Real text from our repositories, rewritten in the house style.
 - [ ] No words from [Words to Avoid](#words-to-avoid)
 - [ ] "you" for the reader; no "I", "our" or "us"
 - [ ] One runnable command comes before any table
+- [ ] `## Usage` has one or two code blocks: the essential argument, the untagged image, no ports or config samples
+- [ ] `## Development` is 3 to 5 `make` commands and "Run `make` to list every target."
 - [ ] Every code block has a lead-in sentence ending with a colon
 - [ ] Hints use GitHub alerts; no emoji outside the author links line
 - [ ] Limits are stated plainly: root user, missing platforms, EOL tags

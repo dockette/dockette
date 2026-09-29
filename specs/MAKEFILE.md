@@ -251,7 +251,7 @@ fxnorm fix
 
 - `fxnorm.yml` is committed in the root and listed in `.dockerignore` when the Dockerfile copies the whole build
   context ([DOCKERFILE.md](DOCKERFILE.md#dockerignore)). In a Contributte library it is export-ignored in
-  `.gitattributes`, together with `AGENTS.md` and `CLAUDE.md`.
+  `.gitattributes`, together with `AGENTS.md`.
 - The Makefile has no `fxnorm` target. fxnorm runs the same way in every repository.
 - `fxnorm explain {rule id}` shows what a rule checks. When a rule and this document disagree, this document wins;
   report the rule.

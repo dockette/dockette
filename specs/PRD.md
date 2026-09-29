@@ -17,6 +17,7 @@ is for, who runs it and what it must and must not do. How it is built is in [TEC
 ## Rules
 
 - `PRD.md` lives in the repository root, next to `README.md`, `TECH.md` and `AGENTS.md`.
+- The README links it. `AGENTS.md` doesn't link it; it covers development only.
 - It is 50 to 150 lines. It is a short product document, not a backlog.
 - It describes the current image or stack. Plans go to issues; open questions go to its last section.
 - It links instead of repeating: usage and variables are in the README, tags in the Versions table, commands in
@@ -38,7 +39,7 @@ Use the image class from [IMAGES.md](IMAGES.md#image-classes):
 | Service with a documented product scope | `adminer`, `apidoc`, `packagist` | when its README needs more than one Usage section |
 | Base, runtime, tool, plain republish | `debian`, `php`, `deploy`, `cadvisor` | no |
 
-`AGENTS.md` and fxnorm follow this table: `dockette/prd-tech-exist` (a warning) knows the repositories named in
+fxnorm follows this table: `dockette/prd-tech-exist` (a warning) knows the repositories named in
 the "yes" rows and treats a Compose file with two or more services and no Dockerfile as a stack. A service in the
 conditional row gets the files when its README needs more than one Usage section, or when a task asks for them.
 

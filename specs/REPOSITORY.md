@@ -39,7 +39,6 @@ Single image:
 .github/workflows/docker.yml
 .editorconfig
 AGENTS.md
-CLAUDE.md
 Dockerfile
 LICENSE
 Makefile
@@ -56,7 +55,6 @@ named after the tag, each with its own `Dockerfile`:
 8.5/Dockerfile
 .editorconfig
 AGENTS.md
-CLAUDE.md
 LICENSE
 Makefile
 README.md
@@ -284,7 +282,7 @@ services:
 Every repository has agent instructions:
 
 - `AGENTS.md` holds the instructions. Its content is described in [AGENTS.md](AGENTS.md).
-- `CLAUDE.md` contains only the line `@AGENTS.md`.
+- `AGENTS.md` is the only agent file; no `CLAUDE.md`.
 - `fxnorm.yml`, written by `fxnorm init`, sets the checks for the repository (see
   [AGENTS.md](AGENTS.md#checking-with-fxnorm)). `fxnorm check` runs the rules that enforce this document.
 
@@ -304,4 +302,4 @@ Every repository has agent instructions:
 - [ ] `.env` is ignored and `.env.dist` is committed when env variables are used
 - [ ] `docker-compose.yml` has no `version:` key
 - [ ] README images are in `.docs/` (no `assets/` level); galleries use one `###` per screen
-- [ ] `AGENTS.md` exists, `CLAUDE.md` is `@AGENTS.md` and `fxnorm.yml` is committed
+- [ ] `AGENTS.md` exists, there is no `CLAUDE.md` and `fxnorm.yml` is committed

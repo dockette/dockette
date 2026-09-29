@@ -156,7 +156,9 @@ Use GitHub alerts. Don't use bold labels, brackets or emoji for hints.
 `AGENTS.md`, `PRD.md`, `TECH.md` and `DESIGN.md` are read by people and AI coding agents. The rules above apply,
 with these additions:
 
-- State facts first, then the rule that follows: "Every version folder is a full copy. Apply a change to every
+- `AGENTS.md` is short and high level: plain bullets for the stack and the principles, a short comment on each
+  command. No traps, bold claims, folder trees or internals (see [AGENTS.md](AGENTS.md)).
+- In `PRD.md`, `TECH.md` and `DESIGN.md`, state facts first, then the rule that follows: "Every version folder is a full copy. Apply a change to every
   folder."
 - Give the reason in one clause: "…because users pin old tags".
 - Correct wrong assumptions directly: "PHP comes from `packages.sury.org`, not from the official `php` image."
@@ -256,8 +258,7 @@ Real text from our repositories, rewritten in the house style.
 
 > Before: Be careful when changing Dockerfiles.
 
-> After: **Every version folder is a full copy.** There is no shared template; a change for all versions is made
-> in every folder, then `make test-all` checks them.
+> After: Every change is built and smoke tested with `make build test` before a commit.
 
 **Commit message**
 

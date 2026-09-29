@@ -148,8 +148,8 @@ push: ## Push image
 - When the workflow has its own smoke test steps, move them into `test` and let the workflow call `make test`
   ([WORKFLOWS.md](WORKFLOWS.md)). The workflow and the Makefile must not test different things.
 - An image that has no test today adds `test` before anything else changes in the `Makefile`. Until it does,
-  `AGENTS.md` names the real smoke test and the missing target (see
-  [AGENTS.md](AGENTS.md#commands-and-ci)).
+  `AGENTS.md` shows the command that tests the image today (see
+  [AGENTS.md](AGENTS.md#sections)).
 
 ## Multi Version Template
 

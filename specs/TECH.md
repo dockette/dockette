@@ -20,6 +20,7 @@ configuration, data, services, testing and the decisions behind them. Product in
 ## Rules
 
 - `TECH.md` lives in the repository root, next to `README.md`, `PRD.md` and `AGENTS.md`.
+- The README links it. `AGENTS.md` doesn't link it; it covers development only.
 - It is 50 to 150 lines. Detail about one part goes to `.docs/` and is linked from here.
 - It describes the image as it is built today, not a plan.
 - It links instead of repeating: variables are in the README tables and `.env.dist`, commands in the `Makefile`
@@ -33,7 +34,7 @@ configuration, data, services, testing and the decisions behind them. Product in
 ## When It Is Required
 
 `TECH.md` is required in the same repositories as `PRD.md` (see [PRD.md](PRD.md#when-it-is-required)). Other
-images keep their build notes in `AGENTS.md` and the Dockerfile comments.
+images keep their build notes in Dockerfile comments and the README.
 
 ## Sections
 
